@@ -57,46 +57,57 @@ export function Component() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowSize]);
 
-  const handleVolumeChange: SliderProps["onChange"] = (
-  _: Event,
-  value: number | number[]
+ const handlePlayerReady = (player: Player) => {
+  player.on("pause", () => {
+    setPlayerState((draft) => ({
+      ...draft,
+      paused: true,
+    }));
+  });
+
+  player.on("play", () => {
+    setPlayerState((draft) => ({
+      ...draft,
+      paused: false,
+    }));
+  });
+
+  player.on("timeupdate", () => {
+    setPlayerState((draft) => ({
+      ...draft,
+      playedSeconds: player.currentTime() ?? 0,
+    }));
+  });
+
+  player.one("durationchange", () => {
+    setPlayerInitialized(true);
+    setPlayerState((draft) => ({
+      ...draft,
+      duration: player.duration() ?? 0,
+    }));
+  });
+
+  playerRef.current = player;
+
+  setPlayerState((draft) => ({
+    ...draft,
+    paused: player.paused() ?? false,
+  }));
+};
+
+const handleVolumeChange: SliderProps["onChange"] = (
+  _,
+  value
 ) => {
-    player.on("pause", () => {
-      setPlayerState((draft) => {
-        return { ...draft, paused: true };
-      });
-    });
+  const volume = Array.isArray(value) ? value[0] : value;
 
-    player.on("play", () => {
-      setPlayerState((draft) => {
-        return { ...draft, paused: false };
-      });
-    });
+  playerRef.current?.volume(volume / 100);
 
-    player.on("timeupdate", () => {
-      setPlayerState((draft) => {
-        return { ...draft, playedSeconds: player.currentTime() };
-      });
-    });
-
-    player.one("durationchange", () => {
-      setPlayerInitialized(true);
-      setPlayerState((draft) => ({ ...draft, duration: player.duration() ?? 0 }));
-    });
-
-    playerRef.current = player;
-
-    setPlayerState((draft) => {
-      return { ...draft, paused: player.paused() ?? false };
-    });
-  };
-
-  const handleVolumeChange: SliderUnstyledOwnProps["onChange"] = (_, value) => {
-    playerRef.current?.volume((value as number) / 100);
-    setPlayerState((draft) => {
-      return { ...draft, volume: (value as number) / 100 };
-    });
-  };
+  setPlayerState((draft) => ({
+    ...draft,
+    volume: volume / 100,
+  }));
+};
 
   const handleSeekTo = (v: number) => {
     playerRef.current?.currentTime(v);

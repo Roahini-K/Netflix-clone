@@ -2,7 +2,7 @@ import { useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import Player from "video.js/dist/types/player";
 import { Box, Stack, Typography } from "@mui/material";
-import { SliderUnstyledOwnProps } from "@mui/base/SliderUnstyled";
+import { SliderProps } from "@mui/material/Slider";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import PauseIcon from "@mui/icons-material/Pause";
 import SkipNextIcon from "@mui/icons-material/SkipNext";
@@ -57,7 +57,10 @@ export function Component() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowSize]);
 
-  const handlePlayerReady = function (player: Player): void {
+  const handleVolumeChange: SliderProps["onChange"] = (
+  _: Event,
+  value: number | number[]
+) => {
     player.on("pause", () => {
       setPlayerState((draft) => {
         return { ...draft, paused: true };
@@ -78,13 +81,13 @@ export function Component() {
 
     player.one("durationchange", () => {
       setPlayerInitialized(true);
-      setPlayerState((draft) => ({ ...draft, duration: player.duration() }));
+      setPlayerState((draft) => ({ ...draft, duration: player.duration() ?? 0 }));
     });
 
     playerRef.current = player;
 
     setPlayerState((draft) => {
-      return { ...draft, paused: player.paused() };
+      return { ...draft, paused: player.paused() ?? false };
     });
   };
 
